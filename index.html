@@ -2,13 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <!-- Мета-теги для отключения масштабирования на мобильных устройствах -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
     <title>EXCHANGE • Мгновенный обмен валют</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -17,6 +22,7 @@
             min-height: 100vh;
             padding: 1.5rem;
             color: #EDF2FF;
+            touch-action: pan-x pan-y; /* сохраняем прокрутку, но запрещаем зум */
         }
 
         /* Glass morphism container */
@@ -57,6 +63,7 @@
             align-items: center;
             justify-content: center;
             transition: 0.25s ease;
+            touch-action: manipulation;
         }
 
         .back-btn:hover {
@@ -64,6 +71,10 @@
             color: white;
             border-color: #4F46E5;
             transform: translateX(-2px);
+        }
+
+        .back-btn:active {
+            transform: scale(0.95);
         }
 
         .page-title {
@@ -113,11 +124,16 @@
         .pairs-table tbody tr {
             transition: all 0.2s;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .pairs-table tbody tr:hover {
             background: rgba(79, 70, 229, 0.2);
             transform: scale(1.01);
+        }
+
+        .pairs-table tbody tr:active {
+            transform: scale(0.99);
         }
 
         .pair-symbol {
@@ -163,6 +179,7 @@
             padding: 1rem 1.2rem;
             transition: all 0.2s;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
         .mobile-pair-card:active {
@@ -343,6 +360,21 @@
             font-weight: 500;
         }
 
+        .currency-input input:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Убираем стрелки у number input на мобилках */
+        .currency-input input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .currency-input input[type="number"]::-webkit-inner-spin-button,
+        .currency-input input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
         .result-box {
             background: #0F172A;
             border-radius: 1.2rem;
@@ -377,11 +409,16 @@
             transition: 0.2s;
             margin-top: 0.5rem;
             box-shadow: 0 8px 14px -6px rgba(79, 70, 229, 0.4);
+            touch-action: manipulation;
         }
 
         .exchange-action-btn:hover {
             background: linear-gradient(95deg, #6366F1, #8B5CF6);
             transform: scale(0.98);
+        }
+
+        .exchange-action-btn:active {
+            transform: scale(0.96);
         }
 
         .toast-message {
@@ -395,21 +432,64 @@
             transition: 0.2s;
         }
 
+        .balance-note {
+            font-size: 0.7rem;
+            text-align: center;
+            background: #0A0F1A;
+            padding: 0.5rem;
+            border-radius: 1rem;
+            margin-top: 1rem;
+        }
+
         /* responsive */
         @media (max-width: 768px) {
-            body { padding: 0.8rem; }
-            .pairs-table { display: none; }
-            .mobile-cards-container { display: flex; }
-            .table-container { padding: 1rem; }
-            .exchange-detail { padding: 1rem; }
-            .pair-big { font-size: 1.6rem; }
-            .requisites-block { flex-direction: column; }
-            .nav-bar { padding: 0.8rem 1rem; }
+            body { 
+                padding: 0.8rem; 
+            }
+            .pairs-table { 
+                display: none; 
+            }
+            .mobile-cards-container { 
+                display: flex; 
+            }
+            .table-container { 
+                padding: 1rem; 
+            }
+            .exchange-detail { 
+                padding: 1rem; 
+            }
+            .pair-big { 
+                font-size: 1.6rem; 
+            }
+            .requisites-block { 
+                flex-direction: column; 
+            }
+            .nav-bar { 
+                padding: 0.8rem 1rem; 
+            }
+            .page-title {
+                font-size: 1.2rem;
+            }
+            .back-btn {
+                width: 2rem;
+                height: 2rem;
+                font-size: 1.1rem;
+            }
         }
 
         @media (max-width: 480px) {
-            .pair-big { font-size: 1.4rem; }
-            .exchange-header { padding: 1rem; }
+            .pair-big { 
+                font-size: 1.4rem; 
+            }
+            .exchange-header { 
+                padding: 1rem; 
+            }
+            .transfer-details-card {
+                padding: 1rem;
+            }
+            .requisite-value {
+                font-size: 0.75rem;
+            }
         }
 
         /* custom scroll */
@@ -428,7 +508,7 @@
 <body>
 <div id="app">
     <div class="nav-bar" id="navBar">
-        <button class="back-btn" id="backButton" style="display: none;">←</button>
+        <button class="back-btn" id="backButton" style="display: none;" aria-label="Назад">←</button>
         <span class="page-title" id="pageTitle">⚡ EXCHANGE</span>
     </div>
     <div id="routerOutlet"></div>
@@ -556,6 +636,7 @@
         `;
         outlet.innerHTML = html;
 
+        // Обработчики для таблицы и мобильных карточек
         document.querySelectorAll('.pairs-table tbody tr, .mobile-pair-card').forEach(el => {
             el.addEventListener('click', (e) => {
                 const pairId = el.getAttribute('data-pair-id');
@@ -604,7 +685,7 @@
                         <label>Вы переводите (${base})</label>
                         <div class="currency-input">
                             <span class="currency-symbol">${base}</span>
-                            <input type="number" id="sendAmount" step="any" value="${minAmount}">
+                            <input type="number" id="sendAmount" step="any" value="${minAmount}" inputmode="decimal">
                         </div>
                         <div style="font-size:0.65rem; margin-top:0.2rem;">мин. ${minAmount} ${base}</div>
                     </div>
@@ -621,7 +702,7 @@
                     </div>
                     <button class="exchange-action-btn" id="exchangeBtn">💳 Подтвердить перевод</button>
                     <div id="toastMsg" class="toast-message">✨ Введите сумму и проверьте реквизиты</div>
-                    <div class="balance-note" style="margin-top: 1rem; font-size:0.7rem; text-align:center; background:#0A0F1A; padding:0.5rem; border-radius:1rem;">
+                    <div class="balance-note">
                         💎 Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2) ?? '0'} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2) ?? '0'}
                     </div>
                 </div>
@@ -681,7 +762,6 @@
             if (userBalance[quote] !== undefined) userBalance[quote] += receivedAmount;
             else userBalance[quote] = receivedAmount;
 
-            // update balance note
             const balanceNoteDiv = document.querySelector('.balance-note');
             if (balanceNoteDiv) {
                 balanceNoteDiv.innerHTML = `💎 Баланс обновлен: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2)} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2)} ✅`;
