@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Currency Exchange | Роутер через Search Parameters + Реквизиты</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Currency Exchange | Мобильная адаптация + Реквизиты</title>
     <style>
         * {
             margin: 0;
@@ -18,7 +18,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 1.5rem;
+            padding: 1rem;
         }
 
         #app {
@@ -27,7 +27,7 @@
             margin: 0 auto;
             background: rgba(12, 18, 28, 0.85);
             backdrop-filter: blur(10px);
-            border-radius: 2rem;
+            border-radius: 1.5rem;
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.2);
             overflow: hidden;
             transition: all 0.2s ease;
@@ -35,11 +35,14 @@
 
         .nav-bar {
             background: rgba(6, 10, 18, 0.95);
-            padding: 1rem 1.8rem;
+            padding: 0.9rem 1.2rem;
             display: flex;
             align-items: center;
-            gap: 1.2rem;
+            gap: 1rem;
             border-bottom: 1px solid rgba(59, 130, 246, 0.4);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .back-btn {
@@ -56,6 +59,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
+            flex-shrink: 0;
         }
 
         .back-btn:hover {
@@ -65,33 +69,37 @@
         }
 
         .page-title {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 700;
             background: linear-gradient(135deg, #E0F2FE, #93c5fd);
             background-clip: text;
             -webkit-background-clip: text;
             color: transparent;
             letter-spacing: -0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* Таблица */
+        /* ========== ГЛАВНАЯ: АДАПТИВНАЯ ТАБЛИЦА → КАРТОЧКИ ========== */
         .table-container {
-            padding: 1.8rem;
-            overflow-x: auto;
+            padding: 1rem;
         }
 
+        /* Десктопная таблица (по умолчанию) */
         .pairs-table {
             width: 100%;
             border-collapse: collapse;
             background: rgba(18, 24, 36, 0.7);
-            border-radius: 1.5rem;
+            border-radius: 1.2rem;
             overflow: hidden;
             backdrop-filter: blur(4px);
+            display: table;
         }
 
         .pairs-table th,
         .pairs-table td {
-            padding: 1rem 1.2rem;
+            padding: 0.9rem 1rem;
             text-align: left;
             border-bottom: 1px solid rgba(59, 130, 246, 0.2);
         }
@@ -100,7 +108,7 @@
             background: rgba(10, 15, 25, 0.9);
             color: #a5c9ff;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
@@ -116,13 +124,13 @@
 
         .pair-symbol {
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #f0f4ff;
         }
 
         .rate-value {
             font-family: monospace;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: #facc15;
             background: rgba(0,0,0,0.3);
@@ -134,208 +142,199 @@
         .badge-market {
             font-size: 0.7rem;
             background: #1e2b3c;
-            padding: 0.2rem 0.7rem;
+            padding: 0.2rem 0.6rem;
             border-radius: 20px;
             color: #7aa9e6;
+            white-space: nowrap;
+        }
+
+        /* Мобильные карточки (скрыты на десктопе, показываются при медиа-запросе) */
+        .mobile-cards-container {
+            display: none;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .mobile-pair-card {
+            background: rgba(18, 24, 36, 0.9);
+            border-radius: 1.2rem;
+            padding: 1rem;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(4px);
+        }
+
+        .mobile-pair-card:active {
+            background: rgba(37, 99, 235, 0.3);
+            transform: scale(0.98);
+        }
+
+        .mobile-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.7rem;
+        }
+
+        .mobile-pair-symbol {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #FFE5B4;
+        }
+
+        .mobile-pair-name {
+            font-size: 0.7rem;
+            color: #8ba0c0;
+            margin-top: 0.2rem;
+        }
+
+        .mobile-rate-badge {
+            background: #00000055;
+            padding: 0.3rem 0.7rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            color: #facc15;
+            font-weight: 600;
+        }
+
+        .mobile-card-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #b9ceff;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 0.6rem;
+        }
+
+        .mobile-min-amount {
+            background: #1e2a3a;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.7rem;
         }
 
         .balance-footer {
             background: #0b101ccc;
-            padding: 0.8rem 1.5rem;
+            padding: 0.8rem 1rem;
             border-top: 1px solid #2c3f5f;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #8ba0c0;
             text-align: center;
         }
 
-        /* Детальная страница */
+        /* ========== ДЕТАЛЬНАЯ СТРАНИЦА (мобильная адаптация) ========== */
         .exchange-detail {
-            padding: 1.8rem;
+            padding: 1rem;
         }
 
         .exchange-header {
-            background: linear-gradient(120deg, #0f172a, #111827);
-            border-radius: 1.5rem;
-            padding: 1.2rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            border: 1px solid #2d3a5e;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            margin-bottom: 1.2rem;
         }
 
         .pair-big {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(145deg, #FFD966, #FFB347);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
+            font-size: 1.6rem;
         }
 
         .live-rate {
-            margin-top: 0.6rem;
-            font-size: 1.1rem;
-            background: #00000044;
-            display: inline-block;
-            padding: 0.3rem 1.2rem;
-            border-radius: 2rem;
-            color: #cdddfd;
+            font-size: 0.9rem;
         }
 
         .transfer-details-card {
-            background: rgba(0, 0, 0, 0.45);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            margin-bottom: 1.8rem;
-            border: 1px solid #2c3e66;
-        }
-
-        .section-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #bbd4ff;
-            border-left: 3px solid #f5b042;
-            padding-left: 0.7rem;
-            margin-bottom: 1rem;
+            border-radius: 1.2rem;
+            padding: 1rem;
+            margin-bottom: 1.2rem;
         }
 
         .requisites-block {
-            background: #0a0f1a;
-            border-radius: 1.2rem;
-            padding: 1rem 1.2rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
+            flex-direction: column;
             gap: 0.8rem;
+            padding: 0.8rem;
         }
 
         .requisite-item {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .requisite-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #7e95c9;
-            letter-spacing: 1px;
+            min-width: auto;
         }
 
         .requisite-value {
-            font-weight: 700;
-            font-size: 1rem;
-            color: #ffecb3;
+            font-size: 0.85rem;
             word-break: break-all;
         }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .input-group label {
-            font-weight: 500;
-            color: #bfd6ff;
-        }
-
-        .currency-input {
-            display: flex;
-            align-items: center;
-            background: #0b1120;
-            border-radius: 1.2rem;
-            border: 1px solid #344a6e;
-            overflow: hidden;
-        }
-
-        .currency-input:focus-within {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
-        }
-
-        .currency-symbol {
-            background: #1a253f;
-            padding: 0.8rem 1rem;
-            font-weight: bold;
+        .section-title {
             font-size: 1rem;
-            color: #c9e0ff;
+            margin-bottom: 0.8rem;
         }
 
         .currency-input input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            padding: 0.8rem 1rem;
-            font-size: 1rem;
-            color: white;
-            outline: none;
-            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.7rem;
         }
 
-        .currency-input input:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .result-box {
-            background: #0a0f1c;
-            border-radius: 1.2rem;
-            padding: 1rem 1.2rem;
-            margin: 1rem 0;
-            border-left: 4px solid #f5b042;
-        }
-
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 0.4rem 0;
+        .currency-symbol {
+            padding: 0.7rem 0.8rem;
+            font-size: 0.9rem;
         }
 
         .result-amount {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: #FFE5B4;
+            font-size: 1rem;
         }
 
         .exchange-action-btn {
-            width: 100%;
-            background: linear-gradient(95deg, #2563eb, #1e40af);
-            border: none;
-            padding: 0.9rem;
-            border-radius: 1.5rem;
-            font-weight: bold;
-            font-size: 1rem;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            margin-top: 0.5rem;
-        }
-
-        .exchange-action-btn:hover {
-            background: linear-gradient(95deg, #3b82f6, #2563eb);
-            transform: scale(0.98);
+            padding: 0.8rem;
+            font-size: 0.95rem;
         }
 
         .toast-message {
-            text-align: center;
-            margin-top: 1rem;
-            padding: 0.6rem;
-            border-radius: 1.5rem;
-            background: #1f2a44;
-            color: #bbe1ff;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
         }
 
-        @media (max-width: 720px) {
+        /* ========== МЕДИА-ЗАПРОС ДЛЯ ПЛАНШЕТОВ И ТЕЛЕФОНОВ ========== */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+            #app {
+                border-radius: 1.2rem;
+            }
+            /* Скрываем обычную таблицу, показываем карточки */
+            .pairs-table {
+                display: none;
+            }
+            .mobile-cards-container {
+                display: flex;
+            }
             .table-container {
-                padding: 1rem;
+                padding: 0.8rem;
             }
-            .pairs-table th, .pairs-table td {
-                padding: 0.7rem;
+            .nav-bar {
+                padding: 0.7rem 1rem;
             }
-            .requisites-block {
-                flex-direction: column;
+            .page-title {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* Дополнительно для очень маленьких экранов (<=480px) */
+        @media (max-width: 480px) {
+            .pair-big {
+                font-size: 1.3rem;
+            }
+            .requisite-value {
+                font-size: 0.75rem;
+            }
+            .mobile-pair-symbol {
+                font-size: 1rem;
+            }
+            .mobile-rate-badge {
+                font-size: 0.7rem;
+            }
+            .balance-footer {
+                font-size: 0.65rem;
             }
         }
     </style>
@@ -386,7 +385,6 @@
     }
 
     // ---------- РОУТЕР НА SEARCH PARAMETERS (query string) ----------
-    // Параметры: ?page=exchange&pair=btc_usdt   или без параметров (главная)
     function getCurrentRouteFromUrl() {
         const urlParams = new URLSearchParams(window.location.search);
         const page = urlParams.get('page');
@@ -419,7 +417,7 @@
             updateNavBar(true, `Обмен ${route.pair.base}/${route.pair.quote}`);
         } else {
             renderMainPage();
-            updateNavBar(false, 'Торговые пары (таблица)');
+            updateNavBar(false, 'Торговые пары');
         }
     }
 
@@ -431,14 +429,19 @@
         pageTitleSpan.innerText = titleText;
     }
 
-    // ---------- ГЛАВНАЯ СТРАНИЦА (ТАБЛИЦА) ----------
+    // ---------- ГЛАВНАЯ СТРАНИЦА: ДВОЙНОЙ РЕНДЕР (ТАБЛИЦА + МОБИЛЬНЫЕ КАРТОЧКИ) ----------
     function renderMainPage() {
         const outlet = document.getElementById('routerOutlet');
         if (!outlet) return;
         
+        // Формируем обычную таблицу (для десктопа)
         let tableRows = '';
+        // Формируем мобильные карточки
+        let mobileCards = '';
+        
         TRADING_PAIRS.forEach(pair => {
             const formattedRate = pair.rate.toLocaleString(undefined, { minimumFractionDigits: pair.precision, maximumFractionDigits: pair.precision });
+            // строка таблицы
             tableRows += `
                 <tr data-pair-id="${pair.id}">
                     <td class="pair-symbol">${pair.base}/${pair.quote}</td>
@@ -448,12 +451,30 @@
                     <td><span class="badge-market">рынок</span></td>
                 </tr>
             `;
+            
+            // карточка для мобильных
+            mobileCards += `
+                <div class="mobile-pair-card" data-pair-id="${pair.id}">
+                    <div class="mobile-card-header">
+                        <div>
+                            <div class="mobile-pair-symbol">${pair.base}/${pair.quote}</div>
+                            <div class="mobile-pair-name">${pair.baseName} → ${pair.quoteName}</div>
+                        </div>
+                        <div class="mobile-rate-badge">${formattedRate} ${pair.quote}</div>
+                    </div>
+                    <div class="mobile-card-details">
+                        <span>📊 1 ${pair.base} ≈ ${formattedRate} ${pair.quote}</span>
+                        <span class="mobile-min-amount">мин. ${pair.minAmount} ${pair.base}</span>
+                    </div>
+                </div>
+            `;
         });
         
         const balanceInfo = `BTC: ${userBalance.BTC.toFixed(5)} | ETH: ${userBalance.ETH.toFixed(4)} | USDT: ${userBalance.USDT.toFixed(2)} | USD: ${userBalance.USD.toFixed(2)} | EUR: ${userBalance.EUR.toFixed(2)} | RUB: ${userBalance.RUB.toFixed(0)}`;
         
         const html = `
             <div class="table-container">
+                <!-- Десктопная таблица -->
                 <table class="pairs-table">
                     <thead>
                         <tr><th>Торговая пара</th><th>Название</th><th>Курс</th><th>Мин. сумма</th><th></th></tr>
@@ -462,27 +483,38 @@
                         ${tableRows}
                     </tbody>
                 </table>
+                
+                <!-- Мобильные карточки (скрыты на десктопе) -->
+                <div class="mobile-cards-container">
+                    ${mobileCards}
+                </div>
+                
                 <div class="balance-footer">
                     💰 Демо-баланс: ${balanceInfo}
-                    <br><span style="font-size:0.7rem;">Кликните по строке таблицы → переход через search параметры (?page=exchange&pair=...)</span>
+                    <br><span style="font-size:0.7rem;">👆 Нажмите на пару для обмена (реквизиты внутри)</span>
                 </div>
             </div>
         `;
         outlet.innerHTML = html;
         
-        // обработчики на строки таблицы
+        // Обработчики для строк таблицы (десктоп)
         document.querySelectorAll('.pairs-table tbody tr').forEach(row => {
             row.addEventListener('click', (e) => {
                 const pairId = row.getAttribute('data-pair-id');
-                if (pairId) {
-                    // переход через search parameters
-                    updateUrlAndRender('exchange', pairId);
-                }
+                if (pairId) updateUrlAndRender('exchange', pairId);
+            });
+        });
+        
+        // Обработчики для мобильных карточек
+        document.querySelectorAll('.mobile-pair-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                const pairId = card.getAttribute('data-pair-id');
+                if (pairId) updateUrlAndRender('exchange', pairId);
             });
         });
     }
     
-    // ---------- СТРАНИЦА ОБМЕНА С РЕКВИЗИТАМИ (через search params) ----------
+    // ---------- СТРАНИЦА ОБМЕНА С РЕКВИЗИТАМИ ----------
     function renderExchangePage(pair) {
         const outlet = document.getElementById('routerOutlet');
         if (!outlet) return;
@@ -495,11 +527,11 @@
                 <div class="exchange-header">
                     <div class="pair-big">${base}/${quote}</div>
                     <div class="live-rate">
-                        🌐 Актуальный курс: 1 ${base} = ${rate.toFixed(precision)} ${quote}
+                        🌐 1 ${base} = ${rate.toFixed(precision)} ${quote}
                     </div>
                 </div>
                 
-                <!-- Блок РЕКВИЗИТОВ перевода -->
+                <!-- БЛОК РЕКВИЗИТОВ ПЕРЕВОДА (обязательный) -->
                 <div class="transfer-details-card">
                     <div class="section-title">📋 Реквизиты для перевода</div>
                     <div class="requisites-block">
@@ -516,12 +548,12 @@
                             <div class="requisite-value">Обмен ${base} → ${quote} | ID: ${pairId.toUpperCase()}</div>
                         </div>
                     </div>
-                    <div style="font-size:0.75rem; color:#8ba3cf; background:#03060e; border-radius:1rem; padding:0.5rem;">
-                        ⚡ После перевода средств на указанные реквизиты, средства будут зачислены в валюте ${quote}. Для симуляции нажмите "Подтвердить перевод" ниже.
+                    <div style="font-size:0.7rem; color:#8ba3cf; background:#03060e; border-radius:1rem; padding:0.5rem;">
+                        ⚡ После перевода средств на указанные реквизиты, средства будут зачислены в валюте ${quote}.
                     </div>
                 </div>
                 
-                <!-- Калькулятор обмена -->
+                <!-- КАЛЬКУЛЯТОР ОБМЕНА -->
                 <div class="transfer-details-card">
                     <div class="section-title">💱 Сумма обмена</div>
                     <div class="input-group">
@@ -540,9 +572,9 @@
                         </div>
                     </div>
                     
-                    <div class="result-box" id="calcPreview">
+                    <div class="result-box">
                         <div class="result-row">
-                            <span>💱 По курсу:</span>
+                            <span>💱 Курс:</span>
                             <span>1 ${base} = ${rate.toFixed(precision)} ${quote}</span>
                         </div>
                         <div class="result-row">
@@ -554,7 +586,7 @@
                     <button class="exchange-action-btn" id="confirmExchangeBtn">✅ Подтвердить перевод и обменять</button>
                     <div id="toastMsg" class="toast-message">💡 Введите сумму и нажмите кнопку перевода</div>
                     <div class="balance-note" style="font-size:0.7rem; margin-top:1rem; text-align:center;">
-                        Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2) ?? '—'} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2) ?? '—'}
+                        💎 Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2) ?? '—'} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2) ?? '—'}
                     </div>
                 </div>
             </div>
@@ -581,7 +613,7 @@
             updateReceive();
             let val = parseFloat(sendInput.value);
             if (!isNaN(val) && val < minAmount && val !== 0) {
-                toastDiv.innerHTML = `⚠️ Минимальная сумма перевода: ${minAmount} ${base}`;
+                toastDiv.innerHTML = `⚠️ Минимальная сумма: ${minAmount} ${base}`;
                 toastDiv.style.background = '#5a372a';
             } else {
                 toastDiv.innerHTML = `💸 Готово к переводу. Проверьте реквизиты выше.`;
@@ -595,7 +627,7 @@
         confirmBtn.addEventListener('click', () => {
             let amountBase = parseFloat(sendInput.value);
             if (isNaN(amountBase) || amountBase <= 0) {
-                toastDiv.innerHTML = '❌ Введите корректную сумму (больше 0)';
+                toastDiv.innerHTML = '❌ Введите корректную сумму (>0)';
                 toastDiv.style.background = '#5a2a36';
                 return;
             }
@@ -625,7 +657,7 @@
             
             const balanceDiv = document.querySelector('.balance-note');
             if (balanceDiv) {
-                balanceDiv.innerHTML = `Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2)} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2)} (обновлено)`;
+                balanceDiv.innerHTML = `💎 Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2)} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2)} (обновлено)`;
             }
             toastDiv.innerHTML = `✅ Перевод выполнен! Списано ${amountBase.toFixed(base === 'BTC' ? 6 : 2)} ${base}, получено ${receivedQuote.toFixed(precision)} ${quote}. Реквизиты оплачены.`;
             toastDiv.style.background = '#1e5631';
@@ -636,25 +668,23 @@
                     toastDiv.style.background = '#1f2a44';
                     setTimeout(() => {
                         if (toastDiv.innerHTML.includes('Перевод выполнен')) 
-                            toastDiv.innerHTML = '✨ Готовы к новому обмену. Выберите другую пару в таблице.';
+                            toastDiv.innerHTML = '✨ Готовы к новому обмену. Вернитесь к таблице.';
                     }, 2000);
                 }
             }, 3000);
         });
     }
     
-    // ---------- ОБРАБОТЧИКИ НАВИГАЦИИ ----------
+    // ---------- НАВИГАЦИЯ ----------
     function setupNavEvents() {
         const backBtn = document.getElementById('backButton');
         if (backBtn) {
             backBtn.onclick = () => {
-                // возврат на главную через очистку search параметров
                 updateUrlAndRender('home');
             };
         }
     }
     
-    // Поддержка кнопок браузера (назад/вперед)
     window.addEventListener('popstate', () => {
         handleRouting();
         setupNavEvents();
