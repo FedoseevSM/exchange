@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Currency Exchange | Таблица валютных пар + реквизиты перевода</title>
+    <title>Currency Exchange | Роутер через Search Parameters + Реквизиты</title>
     <style>
         * {
             margin: 0;
@@ -21,7 +21,6 @@
             padding: 1.5rem;
         }
 
-        /* контейнер приложения */
         #app {
             max-width: 1100px;
             width: 100%;
@@ -34,7 +33,6 @@
             transition: all 0.2s ease;
         }
 
-        /* навигационная панель */
         .nav-bar {
             background: rgba(6, 10, 18, 0.95);
             padding: 1rem 1.8rem;
@@ -76,7 +74,7 @@
             letter-spacing: -0.3px;
         }
 
-        /* --- Стили таблицы (главная страница) --- */
+        /* Таблица */
         .table-container {
             padding: 1.8rem;
             overflow-x: auto;
@@ -107,14 +105,13 @@
             letter-spacing: 0.5px;
         }
 
-        .pairs-table tr {
+        .pairs-table tbody tr {
             transition: background 0.2s;
             cursor: pointer;
         }
 
         .pairs-table tbody tr:hover {
             background: rgba(37, 99, 235, 0.2);
-            cursor: pointer;
         }
 
         .pair-symbol {
@@ -151,7 +148,7 @@
             text-align: center;
         }
 
-        /* --- Стили страницы обмена (детальная) --- */
+        /* Детальная страница */
         .exchange-detail {
             padding: 1.8rem;
         }
@@ -184,7 +181,6 @@
             color: #cdddfd;
         }
 
-        /* карточка перевода с реквизитами */
         .transfer-details-card {
             background: rgba(0, 0, 0, 0.45);
             border-radius: 1.8rem;
@@ -277,6 +273,11 @@
             font-weight: 500;
         }
 
+        .currency-input input:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .result-box {
             background: #0a0f1c;
             border-radius: 1.2rem;
@@ -349,7 +350,7 @@
 </div>
 
 <script>
-    // ---------- ТОРГОВЫЕ ПАРЫ (расширенные данные) ----------
+    // ---------- ТОРГОВЫЕ ПАРЫ ----------
     const TRADING_PAIRS = [
         { id: 'btc_usdt', base: 'BTC', quote: 'USDT', baseName: 'Bitcoin', quoteName: 'Tether', rate: 68450.75, precision: 2, icon: '₿', minAmount: 0.0005 },
         { id: 'eth_usdt', base: 'ETH', quote: 'USDT', baseName: 'Ethereum', quoteName: 'Tether', rate: 3245.30, precision: 2, icon: 'Ξ', minAmount: 0.01 },
@@ -359,7 +360,7 @@
         { id: 'eth_btc', base: 'ETH', quote: 'BTC', baseName: 'Ethereum', quoteName: 'Bitcoin', rate: 0.04735, precision: 6, icon: 'Ξ', minAmount: 0.05 }
     ];
 
-    // Демо-баланс пользователя
+    // Демо-баланс
     let userBalance = {
         BTC: 0.085,
         ETH: 1.45,
@@ -369,7 +370,7 @@
         EUR: 880
     };
 
-    // Генерация уникальных реквизитов для каждой пары (имитация)
+    // Генерация реквизитов для пары
     function getRequisitesForPair(base, quote) {
         const accounts = {
             BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
@@ -379,37 +380,47 @@
             USD: 'SWIFT: CHASUS33 / Acc 00987654',
             EUR: 'IBAN: DE89 3704 0044 0532 0130 00'
         };
-        const defaultText = `Реквизиты для ${base} → ${quote}: аккаунт #${base}${quote}EXCH`;
         if (accounts[base]) return `${accounts[base]} (${base} кошелек)`;
         if (accounts[quote]) return `${accounts[quote]} (счет получателя)`;
-        return defaultText;
+        return `Реквизиты ${base}/${quote}: EXCH-${base}${quote}-001`;
     }
 
-    // Роутер на хешах
-    let currentRoute = '/';
+    // ---------- РОУТЕР НА SEARCH PARAMETERS (query string) ----------
+    // Параметры: ?page=exchange&pair=btc_usdt   или без параметров (главная)
+    function getCurrentRouteFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const page = urlParams.get('page');
+        const pairId = urlParams.get('pair');
+        if (page === 'exchange' && pairId) {
+            const foundPair = TRADING_PAIRS.find(p => p.id === pairId);
+            if (foundPair) return { type: 'exchange', pair: foundPair };
+            else return { type: 'home' };
+        }
+        return { type: 'home' };
+    }
+
+    function updateUrlAndRender(pageType, pairId = null) {
+        const url = new URL(window.location.href);
+        if (pageType === 'exchange' && pairId) {
+            url.searchParams.set('page', 'exchange');
+            url.searchParams.set('pair', pairId);
+        } else {
+            url.searchParams.delete('page');
+            url.searchParams.delete('pair');
+        }
+        window.history.pushState({}, '', url);
+        handleRouting();
+    }
 
     function handleRouting() {
-        const hash = window.location.hash.slice(1) || '/';
-        let path = hash;
-        const exchangeMatch = path.match(/^\/exchange\/([^/]+)$/);
-        if (exchangeMatch) {
-            const pairId = exchangeMatch[1];
-            const foundPair = TRADING_PAIRS.find(p => p.id === pairId);
-            if (foundPair) {
-                renderExchangePage(foundPair);
-                updateNavBar(true, `Обмен ${foundPair.base}/${foundPair.quote}`);
-                return;
-            } else {
-                window.location.hash = '/';
-                return;
-            }
-        }
-        if (path === '/' || path === '') {
+        const route = getCurrentRouteFromUrl();
+        if (route.type === 'exchange' && route.pair) {
+            renderExchangePage(route.pair);
+            updateNavBar(true, `Обмен ${route.pair.base}/${route.pair.quote}`);
+        } else {
             renderMainPage();
             updateNavBar(false, 'Торговые пары (таблица)');
-            return;
         }
-        window.location.hash = '/';
     }
 
     function updateNavBar(showBack, titleText) {
@@ -420,7 +431,7 @@
         pageTitleSpan.innerText = titleText;
     }
 
-    // ---------- Главная страница: ТАБЛИЦА со всеми парами ----------
+    // ---------- ГЛАВНАЯ СТРАНИЦА (ТАБЛИЦА) ----------
     function renderMainPage() {
         const outlet = document.getElementById('routerOutlet');
         if (!outlet) return;
@@ -453,7 +464,7 @@
                 </table>
                 <div class="balance-footer">
                     💰 Демо-баланс: ${balanceInfo}
-                    <br><span style="font-size:0.7rem;">Кликните по строке таблицы для обмена с реквизитами</span>
+                    <br><span style="font-size:0.7rem;">Кликните по строке таблицы → переход через search параметры (?page=exchange&pair=...)</span>
                 </div>
             </div>
         `;
@@ -463,21 +474,21 @@
         document.querySelectorAll('.pairs-table tbody tr').forEach(row => {
             row.addEventListener('click', (e) => {
                 const pairId = row.getAttribute('data-pair-id');
-                if (pairId) window.location.hash = `exchange/${pairId}`;
+                if (pairId) {
+                    // переход через search parameters
+                    updateUrlAndRender('exchange', pairId);
+                }
             });
         });
     }
     
-    // ---------- Страница обмена + РЕКВИЗИТЫ ПЕРЕВОДА ----------
+    // ---------- СТРАНИЦА ОБМЕНА С РЕКВИЗИТАМИ (через search params) ----------
     function renderExchangePage(pair) {
         const outlet = document.getElementById('routerOutlet');
         if (!outlet) return;
         
         const { base, quote, rate, precision, baseName, quoteName, minAmount, id: pairId } = pair;
-        // реквизиты (отображаем для выбранной пары)
         const requisitesText = getRequisitesForPair(base, quote);
-        // дополнительная информация для получателя
-        const bankDetails = `Получатель: EXCHANGE LTD, счет: ${requisitesText.slice(0, 30)}... Комиссия: 0%`;
         
         const detailHtml = `
             <div class="exchange-detail" data-pair="${pairId}">
@@ -488,7 +499,7 @@
                     </div>
                 </div>
                 
-                <!-- Блок РЕКВИЗИТОВ перевода (ключевое требование) -->
+                <!-- Блок РЕКВИЗИТОВ перевода -->
                 <div class="transfer-details-card">
                     <div class="section-title">📋 Реквизиты для перевода</div>
                     <div class="requisites-block">
@@ -568,7 +579,6 @@
         
         sendInput.addEventListener('input', () => {
             updateReceive();
-            // валидация минимальной суммы
             let val = parseFloat(sendInput.value);
             if (!isNaN(val) && val < minAmount && val !== 0) {
                 toastDiv.innerHTML = `⚠️ Минимальная сумма перевода: ${minAmount} ${base}`;
@@ -579,11 +589,9 @@
             }
         });
         
-        // установка начального значения
         sendInput.value = minAmount;
         updateReceive();
         
-        // обработчик "Перевести средства" - симуляция списания баланса и зачисления
         confirmBtn.addEventListener('click', () => {
             let amountBase = parseFloat(sendInput.value);
             if (isNaN(amountBase) || amountBase <= 0) {
@@ -596,10 +604,9 @@
                 toastDiv.style.background = '#5a2a36';
                 return;
             }
-            // проверка баланса
             const currentBaseBalance = userBalance[base];
             if (currentBaseBalance === undefined) {
-                toastDiv.innerHTML = `❌ Баланс для ${base} не определен, но по условию используем демо-списание.`;
+                toastDiv.innerHTML = `❌ Баланс для ${base} не определен`;
                 return;
             }
             if (currentBaseBalance < amountBase) {
@@ -609,28 +616,21 @@
             }
             
             const receivedQuote = amountBase * rate;
-            // списываем базовую валюту
             userBalance[base] = currentBaseBalance - amountBase;
-            // зачисляем котируемую
             if (userBalance[quote] !== undefined) {
                 userBalance[quote] += receivedQuote;
             } else {
                 userBalance[quote] = receivedQuote;
             }
             
-            // обновление отображения баланса
             const balanceDiv = document.querySelector('.balance-note');
             if (balanceDiv) {
                 balanceDiv.innerHTML = `Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2)} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2)} (обновлено)`;
             }
-            // показать успех и реквизиты "переведены"
             toastDiv.innerHTML = `✅ Перевод выполнен! Списано ${amountBase.toFixed(base === 'BTC' ? 6 : 2)} ${base}, получено ${receivedQuote.toFixed(precision)} ${quote}. Реквизиты оплачены.`;
             toastDiv.style.background = '#1e5631';
-            
-            // обновим поле получаемой суммы
             updateReceive();
             
-            // через пару секунд вернуть стиль но оставить сообщение
             setTimeout(() => {
                 if (toastDiv.innerHTML.includes('Перевод выполнен')) {
                     toastDiv.style.background = '#1f2a44';
@@ -643,26 +643,25 @@
         });
     }
     
-    // настройка кнопки назад и событий хеша
+    // ---------- ОБРАБОТЧИКИ НАВИГАЦИИ ----------
     function setupNavEvents() {
         const backBtn = document.getElementById('backButton');
         if (backBtn) {
             backBtn.onclick = () => {
-                window.location.hash = '/';
+                // возврат на главную через очистку search параметров
+                updateUrlAndRender('home');
             };
         }
     }
     
+    // Поддержка кнопок браузера (назад/вперед)
+    window.addEventListener('popstate', () => {
+        handleRouting();
+        setupNavEvents();
+    });
+    
     function initRouter() {
-        window.addEventListener('hashchange', () => {
-            handleRouting();
-            setupNavEvents();
-        });
-        if (!window.location.hash || window.location.hash === '#') {
-            window.location.hash = '/';
-        } else {
-            handleRouting();
-        }
+        handleRouting();
         setupNavEvents();
     }
     
