@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Currency Exchange | Таблица валютных пар + реквизиты перевода</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0a0e1a 0%, #0c1120 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+        }
+
+        /* контейнер приложения */
+        #app {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+            background: rgba(12, 18, 28, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(59, 130, 246, 0.2);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* навигационная панель */
+        .nav-bar {
+            background: rgba(6, 10, 18, 0.95);
+            padding: 1rem 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .back-btn {
+            background: rgba(30, 41, 59, 0.9);
+            border: none;
+            color: #7aa9e6;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 2.3rem;
+            height: 2.3rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #3b4e6e;
+            color: white;
+            transform: scale(0.95);
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #E0F2FE, #93c5fd);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+        }
+
+        /* --- Стили таблицы (главная страница) --- */
+        .table-container {
+            padding: 1.8rem;
+            overflow-x: auto;
+        }
+
+        .pairs-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(18, 24, 36, 0.7);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            backdrop-filter: blur(4px);
+        }
+
+        .pairs-table th,
+        .pairs-table td {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .pairs-table th {
+            background: rgba(10, 15, 25, 0.9);
+            color: #a5c9ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pairs-table tr {
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .pairs-table tbody tr:hover {
+            background: rgba(37, 99, 235, 0.2);
+            cursor: pointer;
+        }
+
+        .pair-symbol {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #f0f4ff;
+        }
+
+        .rate-value {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #facc15;
+            background: rgba(0,0,0,0.3);
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+        }
+
+        .badge-market {
+            font-size: 0.7rem;
+            background: #1e2b3c;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            color: #7aa9e6;
+        }
+
+        .balance-footer {
+            background: #0b101ccc;
+            padding: 0.8rem 1.5rem;
+            border-top: 1px solid #2c3f5f;
+            font-size: 0.75rem;
+            color: #8ba0c0;
+            text-align: center;
+        }
+
+        /* --- Стили страницы обмена (детальная) --- */
+        .exchange-detail {
+            padding: 1.8rem;
+        }
+
+        .exchange-header {
+            background: linear-gradient(120deg, #0f172a, #111827);
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border: 1px solid #2d3a5e;
+        }
+
+        .pair-big {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(145deg, #FFD966, #FFB347);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .live-rate {
+            margin-top: 0.6rem;
+            font-size: 1.1rem;
+            background: #00000044;
+            display: inline-block;
+            padding: 0.3rem 1.2rem;
+            border-radius: 2rem;
+            color: #cdddfd;
+        }
+
+        /* карточка перевода с реквизитами */
+        .transfer-details-card {
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 1.8rem;
+            padding: 1.5rem;
+            margin-bottom: 1.8rem;
+            border: 1px solid #2c3e66;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #bbd4ff;
+            border-left: 3px solid #f5b042;
+            padding-left: 0.7rem;
+            margin-bottom: 1rem;
+        }
+
+        .requisites-block {
+            background: #0a0f1a;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+
+        .requisite-item {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .requisite-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #7e95c9;
+            letter-spacing: 1px;
+        }
+
+        .requisite-value {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #ffecb3;
+            word-break: break-all;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group label {
+            font-weight: 500;
+            color: #bfd6ff;
+        }
+
+        .currency-input {
+            display: flex;
+            align-items: center;
+            background: #0b1120;
+            border-radius: 1.2rem;
+            border: 1px solid #344a6e;
+            overflow: hidden;
+        }
+
+        .currency-input:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.3);
+        }
+
+        .currency-symbol {
+            background: #1a253f;
+            padding: 0.8rem 1rem;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #c9e0ff;
+        }
+
+        .currency-input input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 0.8rem 1rem;
+            font-size: 1rem;
+            color: white;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .result-box {
+            background: #0a0f1c;
+            border-radius: 1.2rem;
+            padding: 1rem 1.2rem;
+            margin: 1rem 0;
+            border-left: 4px solid #f5b042;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 0.4rem 0;
+        }
+
+        .result-amount {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #FFE5B4;
+        }
+
+        .exchange-action-btn {
+            width: 100%;
+            background: linear-gradient(95deg, #2563eb, #1e40af);
+            border: none;
+            padding: 0.9rem;
+            border-radius: 1.5rem;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .exchange-action-btn:hover {
+            background: linear-gradient(95deg, #3b82f6, #2563eb);
+            transform: scale(0.98);
+        }
+
+        .toast-message {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.6rem;
+            border-radius: 1.5rem;
+            background: #1f2a44;
+            color: #bbe1ff;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 720px) {
+            .table-container {
+                padding: 1rem;
+            }
+            .pairs-table th, .pairs-table td {
+                padding: 0.7rem;
+            }
+            .requisites-block {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="nav-bar" id="navBar">
+        <button class="back-btn" id="backButton" style="display: none;">←</button>
+        <span class="page-title" id="pageTitle">Валютный обмен</span>
+    </div>
+    <div id="routerOutlet"></div>
+</div>
+
+<script>
+    // ---------- ТОРГОВЫЕ ПАРЫ (расширенные данные) ----------
+    const TRADING_PAIRS = [
+        { id: 'btc_usdt', base: 'BTC', quote: 'USDT', baseName: 'Bitcoin', quoteName: 'Tether', rate: 68450.75, precision: 2, icon: '₿', minAmount: 0.0005 },
+        { id: 'eth_usdt', base: 'ETH', quote: 'USDT', baseName: 'Ethereum', quoteName: 'Tether', rate: 3245.30, precision: 2, icon: 'Ξ', minAmount: 0.01 },
+        { id: 'btc_rub', base: 'BTC', quote: 'RUB', baseName: 'Bitcoin', quoteName: 'Russian Ruble', rate: 5985000.00, precision: 0, icon: '₿', minAmount: 0.0005 },
+        { id: 'usd_rub', base: 'USD', quote: 'RUB', baseName: 'US Dollar', quoteName: 'Russian Ruble', rate: 92.85, precision: 2, icon: '$', minAmount: 5 },
+        { id: 'eur_usd', base: 'EUR', quote: 'USD', baseName: 'Euro', quoteName: 'US Dollar', rate: 1.0892, precision: 4, icon: '€', minAmount: 10 },
+        { id: 'eth_btc', base: 'ETH', quote: 'BTC', baseName: 'Ethereum', quoteName: 'Bitcoin', rate: 0.04735, precision: 6, icon: 'Ξ', minAmount: 0.05 }
+    ];
+
+    // Демо-баланс пользователя
+    let userBalance = {
+        BTC: 0.085,
+        ETH: 1.45,
+        USDT: 3200,
+        RUB: 125000,
+        USD: 2100,
+        EUR: 880
+    };
+
+    // Генерация уникальных реквизитов для каждой пары (имитация)
+    function getRequisitesForPair(base, quote) {
+        const accounts = {
+            BTC: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+            ETH: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+            USDT: 'TRC20: TQm9tFyV9zRjL6k3xWpE8nB5uH7jK2LmN',
+            RUB: 'СБП 2202 2024 1234 5678 (Иванов И.И.)',
+            USD: 'SWIFT: CHASUS33 / Acc 00987654',
+            EUR: 'IBAN: DE89 3704 0044 0532 0130 00'
+        };
+        const defaultText = `Реквизиты для ${base} → ${quote}: аккаунт #${base}${quote}EXCH`;
+        if (accounts[base]) return `${accounts[base]} (${base} кошелек)`;
+        if (accounts[quote]) return `${accounts[quote]} (счет получателя)`;
+        return defaultText;
+    }
+
+    // Роутер на хешах
+    let currentRoute = '/';
+
+    function handleRouting() {
+        const hash = window.location.hash.slice(1) || '/';
+        let path = hash;
+        const exchangeMatch = path.match(/^\/exchange\/([^/]+)$/);
+        if (exchangeMatch) {
+            const pairId = exchangeMatch[1];
+            const foundPair = TRADING_PAIRS.find(p => p.id === pairId);
+            if (foundPair) {
+                renderExchangePage(foundPair);
+                updateNavBar(true, `Обмен ${foundPair.base}/${foundPair.quote}`);
+                return;
+            } else {
+                window.location.hash = '/';
+                return;
+            }
+        }
+        if (path === '/' || path === '') {
+            renderMainPage();
+            updateNavBar(false, 'Торговые пары (таблица)');
+            return;
+        }
+        window.location.hash = '/';
+    }
+
+    function updateNavBar(showBack, titleText) {
+        const backBtn = document.getElementById('backButton');
+        const pageTitleSpan = document.getElementById('pageTitle');
+        if (showBack) backBtn.style.display = 'flex';
+        else backBtn.style.display = 'none';
+        pageTitleSpan.innerText = titleText;
+    }
+
+    // ---------- Главная страница: ТАБЛИЦА со всеми парами ----------
+    function renderMainPage() {
+        const outlet = document.getElementById('routerOutlet');
+        if (!outlet) return;
+        
+        let tableRows = '';
+        TRADING_PAIRS.forEach(pair => {
+            const formattedRate = pair.rate.toLocaleString(undefined, { minimumFractionDigits: pair.precision, maximumFractionDigits: pair.precision });
+            tableRows += `
+                <tr data-pair-id="${pair.id}">
+                    <td class="pair-symbol">${pair.base}/${pair.quote}</td>
+                    <td>${pair.baseName} → ${pair.quoteName}</td>
+                    <td><span class="rate-value">1 ${pair.base} = ${formattedRate} ${pair.quote}</span></td>
+                    <td>${pair.minAmount} ${pair.base}</td>
+                    <td><span class="badge-market">рынок</span></td>
+                </tr>
+            `;
+        });
+        
+        const balanceInfo = `BTC: ${userBalance.BTC.toFixed(5)} | ETH: ${userBalance.ETH.toFixed(4)} | USDT: ${userBalance.USDT.toFixed(2)} | USD: ${userBalance.USD.toFixed(2)} | EUR: ${userBalance.EUR.toFixed(2)} | RUB: ${userBalance.RUB.toFixed(0)}`;
+        
+        const html = `
+            <div class="table-container">
+                <table class="pairs-table">
+                    <thead>
+                        <tr><th>Торговая пара</th><th>Название</th><th>Курс</th><th>Мин. сумма</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+                <div class="balance-footer">
+                    💰 Демо-баланс: ${balanceInfo}
+                    <br><span style="font-size:0.7rem;">Кликните по строке таблицы для обмена с реквизитами</span>
+                </div>
+            </div>
+        `;
+        outlet.innerHTML = html;
+        
+        // обработчики на строки таблицы
+        document.querySelectorAll('.pairs-table tbody tr').forEach(row => {
+            row.addEventListener('click', (e) => {
+                const pairId = row.getAttribute('data-pair-id');
+                if (pairId) window.location.hash = `exchange/${pairId}`;
+            });
+        });
+    }
+    
+    // ---------- Страница обмена + РЕКВИЗИТЫ ПЕРЕВОДА ----------
+    function renderExchangePage(pair) {
+        const outlet = document.getElementById('routerOutlet');
+        if (!outlet) return;
+        
+        const { base, quote, rate, precision, baseName, quoteName, minAmount, id: pairId } = pair;
+        // реквизиты (отображаем для выбранной пары)
+        const requisitesText = getRequisitesForPair(base, quote);
+        // дополнительная информация для получателя
+        const bankDetails = `Получатель: EXCHANGE LTD, счет: ${requisitesText.slice(0, 30)}... Комиссия: 0%`;
+        
+        const detailHtml = `
+            <div class="exchange-detail" data-pair="${pairId}">
+                <div class="exchange-header">
+                    <div class="pair-big">${base}/${quote}</div>
+                    <div class="live-rate">
+                        🌐 Актуальный курс: 1 ${base} = ${rate.toFixed(precision)} ${quote}
+                    </div>
+                </div>
+                
+                <!-- Блок РЕКВИЗИТОВ перевода (ключевое требование) -->
+                <div class="transfer-details-card">
+                    <div class="section-title">📋 Реквизиты для перевода</div>
+                    <div class="requisites-block">
+                        <div class="requisite-item">
+                            <div class="requisite-label">💳 Валюта отправки</div>
+                            <div class="requisite-value">${base} (${baseName})</div>
+                        </div>
+                        <div class="requisite-item">
+                            <div class="requisite-label">🏦 Кошелек / Счет</div>
+                            <div class="requisite-value">${requisitesText}</div>
+                        </div>
+                        <div class="requisite-item">
+                            <div class="requisite-label">📝 Назначение платежа</div>
+                            <div class="requisite-value">Обмен ${base} → ${quote} | ID: ${pairId.toUpperCase()}</div>
+                        </div>
+                    </div>
+                    <div style="font-size:0.75rem; color:#8ba3cf; background:#03060e; border-radius:1rem; padding:0.5rem;">
+                        ⚡ После перевода средств на указанные реквизиты, средства будут зачислены в валюте ${quote}. Для симуляции нажмите "Подтвердить перевод" ниже.
+                    </div>
+                </div>
+                
+                <!-- Калькулятор обмена -->
+                <div class="transfer-details-card">
+                    <div class="section-title">💱 Сумма обмена</div>
+                    <div class="input-group">
+                        <label>Отправляете (${base})</label>
+                        <div class="currency-input">
+                            <span class="currency-symbol">${base}</span>
+                            <input type="number" id="sendAmount" placeholder="0.00" step="any" value="${minAmount}">
+                        </div>
+                        <div style="font-size:0.7rem; color:#94a3b8;">Мин. ${minAmount} ${base}</div>
+                    </div>
+                    <div class="input-group">
+                        <label>Получаете (${quote})</label>
+                        <div class="currency-input">
+                            <span class="currency-symbol">${quote}</span>
+                            <input type="number" id="receiveAmount" placeholder="0.00" step="any" readonly disabled style="background:#0a101e; color:#cddcff;">
+                        </div>
+                    </div>
+                    
+                    <div class="result-box" id="calcPreview">
+                        <div class="result-row">
+                            <span>💱 По курсу:</span>
+                            <span>1 ${base} = ${rate.toFixed(precision)} ${quote}</span>
+                        </div>
+                        <div class="result-row">
+                            <span>✨ Вы получите:</span>
+                            <span class="result-amount" id="dynamicReceive">0.00 ${quote}</span>
+                        </div>
+                    </div>
+                    
+                    <button class="exchange-action-btn" id="confirmExchangeBtn">✅ Подтвердить перевод и обменять</button>
+                    <div id="toastMsg" class="toast-message">💡 Введите сумму и нажмите кнопку перевода</div>
+                    <div class="balance-note" style="font-size:0.7rem; margin-top:1rem; text-align:center;">
+                        Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2) ?? '—'} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2) ?? '—'}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        outlet.innerHTML = detailHtml;
+        
+        const sendInput = document.getElementById('sendAmount');
+        const receiveSpan = document.getElementById('dynamicReceive');
+        const receiveInput = document.getElementById('receiveAmount');
+        const confirmBtn = document.getElementById('confirmExchangeBtn');
+        const toastDiv = document.getElementById('toastMsg');
+        
+        function updateReceive() {
+            let sendVal = parseFloat(sendInput.value);
+            if (isNaN(sendVal) || sendVal < 0) sendVal = 0;
+            const received = sendVal * rate;
+            const formattedReceived = received.toFixed(precision);
+            receiveSpan.innerText = `${formattedReceived} ${quote}`;
+            if (receiveInput) receiveInput.value = formattedReceived;
+        }
+        
+        sendInput.addEventListener('input', () => {
+            updateReceive();
+            // валидация минимальной суммы
+            let val = parseFloat(sendInput.value);
+            if (!isNaN(val) && val < minAmount && val !== 0) {
+                toastDiv.innerHTML = `⚠️ Минимальная сумма перевода: ${minAmount} ${base}`;
+                toastDiv.style.background = '#5a372a';
+            } else {
+                toastDiv.innerHTML = `💸 Готово к переводу. Проверьте реквизиты выше.`;
+                toastDiv.style.background = '#1f2a44';
+            }
+        });
+        
+        // установка начального значения
+        sendInput.value = minAmount;
+        updateReceive();
+        
+        // обработчик "Перевести средства" - симуляция списания баланса и зачисления
+        confirmBtn.addEventListener('click', () => {
+            let amountBase = parseFloat(sendInput.value);
+            if (isNaN(amountBase) || amountBase <= 0) {
+                toastDiv.innerHTML = '❌ Введите корректную сумму (больше 0)';
+                toastDiv.style.background = '#5a2a36';
+                return;
+            }
+            if (amountBase < minAmount) {
+                toastDiv.innerHTML = `❌ Сумма меньше минимума (${minAmount} ${base})`;
+                toastDiv.style.background = '#5a2a36';
+                return;
+            }
+            // проверка баланса
+            const currentBaseBalance = userBalance[base];
+            if (currentBaseBalance === undefined) {
+                toastDiv.innerHTML = `❌ Баланс для ${base} не определен, но по условию используем демо-списание.`;
+                return;
+            }
+            if (currentBaseBalance < amountBase) {
+                toastDiv.innerHTML = `⛔ Недостаточно ${base}. Доступно: ${currentBaseBalance.toFixed(base === 'BTC' ? 6 : 2)} ${base}`;
+                toastDiv.style.background = '#9b2c2c';
+                return;
+            }
+            
+            const receivedQuote = amountBase * rate;
+            // списываем базовую валюту
+            userBalance[base] = currentBaseBalance - amountBase;
+            // зачисляем котируемую
+            if (userBalance[quote] !== undefined) {
+                userBalance[quote] += receivedQuote;
+            } else {
+                userBalance[quote] = receivedQuote;
+            }
+            
+            // обновление отображения баланса
+            const balanceDiv = document.querySelector('.balance-note');
+            if (balanceDiv) {
+                balanceDiv.innerHTML = `Ваш баланс: ${base}: ${userBalance[base]?.toFixed(base === 'BTC' ? 6 : 2)} | ${quote}: ${userBalance[quote]?.toFixed(quote === 'RUB' ? 0 : 2)} (обновлено)`;
+            }
+            // показать успех и реквизиты "переведены"
+            toastDiv.innerHTML = `✅ Перевод выполнен! Списано ${amountBase.toFixed(base === 'BTC' ? 6 : 2)} ${base}, получено ${receivedQuote.toFixed(precision)} ${quote}. Реквизиты оплачены.`;
+            toastDiv.style.background = '#1e5631';
+            
+            // обновим поле получаемой суммы
+            updateReceive();
+            
+            // через пару секунд вернуть стиль но оставить сообщение
+            setTimeout(() => {
+                if (toastDiv.innerHTML.includes('Перевод выполнен')) {
+                    toastDiv.style.background = '#1f2a44';
+                    setTimeout(() => {
+                        if (toastDiv.innerHTML.includes('Перевод выполнен')) 
+                            toastDiv.innerHTML = '✨ Готовы к новому обмену. Выберите другую пару в таблице.';
+                    }, 2000);
+                }
+            }, 3000);
+        });
+    }
+    
+    // настройка кнопки назад и событий хеша
+    function setupNavEvents() {
+        const backBtn = document.getElementById('backButton');
+        if (backBtn) {
+            backBtn.onclick = () => {
+                window.location.hash = '/';
+            };
+        }
+    }
+    
+    function initRouter() {
+        window.addEventListener('hashchange', () => {
+            handleRouting();
+            setupNavEvents();
+        });
+        if (!window.location.hash || window.location.hash === '#') {
+            window.location.hash = '/';
+        } else {
+            handleRouting();
+        }
+        setupNavEvents();
+    }
+    
+    initRouter();
+</script>
+</body>
+</html>
